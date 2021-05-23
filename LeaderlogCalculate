@@ -1,5 +1,6 @@
+# Script created by WISH Pool
 # This script will show the stake pool's leaderlogs using the cncli tool
-# created by Andrew Westberg (see https://github.com/AndrewWestberg/cncli/)
+# created by Andrew Westberg. See https://github.com/AndrewWestberg/cncli/
 # for more information and for the latest documentation
 # Note that next logs are only available 1.5 days before the end of the epoch. 
 # This uses the stake-snapshot approach
