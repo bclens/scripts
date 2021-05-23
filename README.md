@@ -1,6 +1,6 @@
 # scripts
 
-This scripts repository will hold asministrative scripts that can be used when managing your nodes.
+The scripts repository will hold asministrative scripts that can be used when managing your nodes.
 All of these scripts were created by myself to simplify administration although the underlying
 technology and programs are created by their respective authors e.g. IOG, Andrew Westberg, etc.
 
