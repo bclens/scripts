@@ -1,0 +1,59 @@
+# This script will show the stake pool's leaderlogs using the cncli tool
+# created by Andrew Westberg (see https://github.com/AndrewWestberg/cncli/)
+# for more information and for the latest documentation
+# Note that next logs are only available 1.5 days before the end of the epoch. 
+# This uses the stake-snapshot approach
+# The output will be saved to leaderlog-$EPOCH.out
+################################################################################
+
+# Update these variables before running this script:
+TICKER='WISH'
+POOLID='4dbdfb68de96a563719f7df2b3cf7c98fb547a3e7edca2a547d35852'
+PORT=61234    # Change to the port number of your BP
+
+echo Enter the period you want the leaderlogs to display
+echo [1] Next
+echo [2] Current
+echo [3] Previous
+echo -n Enter the number of your choice: ; read choice
+echo Please wait...
+
+# Change the port number below to the port number of your BP
+/usr/local/bin/cncli sync --host 127.0.0.1 --port $PORT --no-service
+echo Calculating leaderlogs for $TICKER
+SNAPSHOT=$(/usr/local/bin/cardano-cli query stake-snapshot --stake-pool-id $POOLID --mainnet)
+
+case "$choice" in 
+
+1) echo Next selected
+   PERIOD='next'
+   POOL_STAKE=$(jq .poolStakeMark <<< $SNAPSHOT)
+   ACTIVE_STAKE=$(jq .activeStakeMark <<< $SNAPSHOT)
+   ;;
+2) echo Current selected
+   PERIOD='current'
+   POOL_STAKE=$(jq .poolStakeSet <<< $SNAPSHOT)
+   ACTIVE_STAKE=$(jq .activeStakeSet <<< $SNAPSHOT)
+   ;;
+3) echo Previous selected
+   PERIOD='prev'
+   POOL_STAKE=$(jq .poolStakeGo <<< $SNAPSHOT)
+   ACTIVE_STAKE=$(jq .activeStakeGo <<< $SNAPSHOT)
+   ;;
+*) echo Invalid choice selected
+   exit 1
+   ;;
+
+esac
+
+LLOG=`/usr/local/bin/cncli leaderlog --pool-id $POOLID --pool-vrf-skey $NODE_HOME/vrf.skey --byron-genesis $NODE_HOME/mainnet-byron-genesis.json --shelley-genesis $NODE_HOME/mainnet-shelley-genesis.json --pool-stake $POOL_STAKE --active-stake $ACTIVE_STAKE --ledger-set $PERIOD --tz Asia/Singapore`
+
+EPOCH=`jq .epoch <<< $LLOG`
+echo "\`Epoch $EPOCH\` 🧙🔮:"
+
+SLOTS=`jq .epochSlots <<< $LLOG`
+IDEAL=`jq .epochSlotsIdeal <<< $LLOG`
+PERFORMANCE=`jq .maxPerformance <<< $LLOG`
+echo "\`$TICKER  - $SLOTS \`🎰\`,  $PERFORMANCE% \`🍀max, \`$IDEAL\` 🧱ideal"
+
+echo $LLOG > leaderlog-$EPOCH.out
