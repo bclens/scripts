@@ -1,0 +1,18 @@
+# This script will install the binaries of the cncli tool created by Andrew Westberg.
+# See https://github.com/AndrewWestberg/cncli for more information abou this tool
+# Use these scripts to install/update your cncli version
+# Note that these steps may change in the future if the source changes
+########################################################################################
+
+# Update these variables with the correct values before running the script
+VERSION='2.1.1'
+CNCLIDIR=/usr/local/bin
+
+# Copy new version to /tmp
+curl -sLJ https://github.com/AndrewWestberg/cncli/releases/download/v$VERSION/cncli-$VERSION-x86_64-unknown-linux-gnu.tar.gz -o /tmp/cncli-$VERSION-x86_64-unknown-linux-gnu.tar.gz
+
+# Backup old version of cncli to cncli.old
+sudo mv $CNCLIDIR/cncli $CNCLIDIR/cncli.old
+
+# Extract new version of cncli to $CNCLIDIR
+sudo tar xzvf /tmp/cncli-$VERSION-x86_64-unknown-linux-gnu.tar.gz -C $CNCLIDIR/
