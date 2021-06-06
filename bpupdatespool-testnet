@@ -1,0 +1,169 @@
+# Steps to update Stake Pool pledge, fee, margin, metadata in TESTNET
+echo These are steps to update SP pledge, fee, margin, metadata in TESTNET
+echo press Enter to continue; read enter
+
+echo Getting new params.json.  Will overwrite $NODE_HOME/params.json.old
+echo press Enter to continue; read enter
+mv params.json params.json.old
+cardano-cli query protocol-parameters \
+    --testnet-magic 1097911063 \
+    --out-file $NODE_HOME/params.json
+
+echo -n "Do you want to update pool metadata? y/n?"
+read Ans
+if [ "$Ans" == "y" ]; then 
+  # Download poolMetaData.json from your created git.io link
+  echo Download poolMetaData.json from your git.io link
+  cd $NODE_HOME
+  wget -O poolMetaData.json https://git.io/JqnIK
+ # Generate the updated pool metadata hash
+  echo Generate the updated pool metadata hash
+  cardano-cli stake-pool metadata-hash --pool-metadata-file poolMetaData.json > poolMetaDataHash.txt
+  echo Upload poolMetaData.json to your website 
+else
+  echo Pool Metadata will not be updated.
+fi
+echo press Enter to continue; read enter
+
+# Find minimum pool cost
+minPoolCost=$(cat $NODE_HOME/params.json | jq -r .minPoolCost)
+echo minPoolCost: ${minPoolCost}
+
+########################################################################
+#######             Do this from your AIRGAP machine              ######
+# Create a registration certificate for your pool 
+# including relay and metadata
+echo STOP and do the next steps on your AIRGAP machine
+echo -n Press Enter to continue...
+read enter
+
+# Build the raw command
+# Pledge 20,000, Cost 340, Margin 2.2%   
+#cardano-cli stake-pool registration-certificate \
+#    --cold-verification-key-file $HOME/cold-keys/node.vkey \
+#    --vrf-verification-key-file vrf.vkey \
+#    --pool-pledge 20000000000 \
+#    --pool-cost 340000000 \
+#    --pool-margin 0.019 \
+#    --pool-reward-account-verification-key-file stake.vkey \
+#    --pool-owner-stake-verification-key-file stake.vkey \
+#    --testnet-magic 1097911063 \
+#    --single-host-pool-relay hermes.blockchainlens.org \
+#    --pool-relay-port 6000 \
+#    --single-host-pool-relay artemis.blockchainlens.org \
+#    --pool-relay-port 6001 \
+#    --metadata-url https://git.io/JqnIK \
+#    --metadata-hash $(cat poolMetaDataHash.txt) \
+#    --out-file pool.cert
+
+#cardano-cli stake-address delegation-certificate \
+#    --stake-verification-key-file stake.vkey \
+#    --cold-verification-key-file $HOME/cold-keys/node.vkey \
+#    --out-file deleg.cert
+
+#####################################################################
+# Next steps are from your BP
+#####################################################################
+echo Copy pool.cert and deleg.cert from AIRGAP to your BP
+echo Proceed with next steps from your BP
+echo -n Press Enter to continue... ; read enter
+
+# Find the tip
+currentSlot=$(cardano-cli query tip --testnet-magic 1097911063 | jq -r '.slot')
+echo Current Slot: $currentSlot
+echo -n Press Enter to continue... ; read enter
+
+# Find balance and UTXO's
+cardano-cli query utxo \
+    --address $(cat payment.addr) \
+    --testnet-magic 1097911063 > fullUtxo.out
+
+tail -n +3 fullUtxo.out | sort -k3 -nr > balance.out
+
+cat balance.out
+
+tx_in=""
+total_balance=0
+while read -r utxo; do
+    in_addr=$(awk '{ print $1 }' <<< "${utxo}")
+    idx=$(awk '{ print $2 }' <<< "${utxo}")
+    utxo_balance=$(awk '{ print $3 }' <<< "${utxo}")
+    total_balance=$((${total_balance}+${utxo_balance}))
+    echo TxHash: ${in_addr}#${idx}
+    echo ADA: ${utxo_balance}
+    tx_in="${tx_in} --tx-in ${in_addr}#${idx}"
+done < balance.out
+txcnt=$(cat balance.out | wc -l)
+echo Total ADA balance: ${total_balance}
+echo Number of UTXOs: ${txcnt}
+echo -n Press Enter to continue... ; read enter
+
+# Run the initial build-raw command
+echo Running initial build-raw command
+cardano-cli transaction build-raw \
+    ${tx_in} \
+    --tx-out $(cat payment.addr)+${total_balance} \
+    --invalid-hereafter $(( ${currentSlot} + 10000)) \
+    --fee 0 \
+    --certificate-file pool.cert \
+    --certificate-file deleg.cert \
+    --out-file tx.tmp
+echo -n Press Enter to continue... ; read enter
+
+# Calculate the minimum fee
+fee=$(cardano-cli transaction calculate-min-fee \
+    --tx-body-file tx.tmp \
+    --tx-in-count ${txcnt} \
+    --tx-out-count 1 \
+    --testnet-magic 1097911063 \
+    --witness-count 3 \
+    --byron-witness-count 0 \
+    --protocol-params-file params.json | awk '{ print $1 }')
+echo fee: $fee
+
+# Calculate the change output
+txOut=$((${total_balance}-${fee}))
+echo txOut: ${txOut}
+
+# Build the transaction
+cardano-cli transaction build-raw \
+    ${tx_in} \
+    --tx-out $(cat payment.addr)+${txOut} \
+    --invalid-hereafter $(( ${currentSlot} + 10000)) \
+    --fee ${fee} \
+    --certificate-file pool.cert \
+    --certificate-file deleg.cert \
+    --out-file tx.raw
+
+echo copy tx.raw to your AIRGAP Machine
+echo -n Press Enter to continue...; read enter
+
+#################################################
+# Do this from AIRGAP
+#################################################
+# Sign the transaction
+#cardano-cli transaction sign \
+#    --tx-body-file tx.raw \
+#    --signing-key-file payment.skey \
+#    --signing-key-file $HOME/cold-keys/node.skey \
+#    --signing-key-file stake.skey \
+#    --testnet-magic 1097911063 \
+#    --out-file tx.signed
+
+echo Copy tx.signed from AIRGAP to BP
+echo -n Press Enter to continue...; read enter
+echo Sending the transaction
+#########  Do this from the BP #########
+cardano-cli transaction submit \
+    --tx-file tx.signed \
+    --testnet-magic 1097911063
+
+# Verify the stake pool id is in the blockchain
+echo Verifying the stake pool id is in the blockchain
+cardano-cli query ledger-state --testnet-magic 1097911063 > ledger-state.json
+#jq -r '.esLState._delegationState._pstate._pParams."'"$(cat stakepoolid.txt)"'"  // empty' ledger-state.json
+# Old command
+grep publicKey ledger-state.json | grep $(cat stakepoolid.txt)
+
+echo If you have updated pledge fee etc... 
+echo Wait till next epoch for changes to take effect
