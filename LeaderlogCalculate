@@ -13,10 +13,11 @@
 ################################################################################
 
 # Update these variables before running this script:
-TICKER='WISH'
+TICKER='WISH'        # Change to your pool Ticker
 POOLID='4dbdfb68de96a563719f7df2b3cf7c98fb547a3e7edca2a547d35852'
-PORT=61234    # Change to the port number of your BP
-TZ='Asia/Singapore'
+                     # Change above to your Pool ID
+PORT=61234           # Change to the port number of your BP
+TZ='Asia/Singapore'  # Change to your Time Zone
 
 echo Enter the period you want the leaderlogs to display
 echo [1] Next
@@ -53,6 +54,7 @@ case "$choice" in
 
 esac
 
+# Update file names below if you use different naming convention in your environment
 LLOG=`/usr/local/bin/cncli leaderlog --pool-id $POOLID --pool-vrf-skey $NODE_HOME/vrf.skey --byron-genesis $NODE_HOME/mainnet-byron-genesis.json --shelley-genesis $NODE_HOME/mainnet-shelley-genesis.json --pool-stake $POOL_STAKE --active-stake $ACTIVE_STAKE --ledger-set $PERIOD --tz $TZ`
 
 EPOCH=`jq .epoch <<< $LLOG`
