@@ -7,6 +7,7 @@
 # Parts of the code are inspired from Andrew's documentation with improvements
 # Next logs are only available 1.5 days before the end of the epoch. 
 # This uses the new stake-snapshot approach which utilizes less memory
+# Script has been updated to work in both mainnet and testnet
 # Lines to be executed are echoed to screen for debugging purposes.
 # The output will be saved to leaderlog-$EPOCH.out
 # NOTE: 
