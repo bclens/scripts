@@ -1,6 +1,6 @@
 # Script created by WISH Pool
 # This script will show the stake pool's leaderlogs using the cncli tool
-# created by Andrew Westberg. See https://github.com/AndrewWestberg/cncli/
+# created by Andrew Westberg. See https://github.com/cardano-community/cncli/
 # for more information and for the latest documentation
 # Note that this is a wrapper script to automate and make easier the use of
 # the cncli tool by Andrew Westberg as well as present it in column format.
@@ -87,7 +87,7 @@ SNAPSHOT=$($SCMD)case "$period" in
 esac
 
 # Update file names below if you use different naming convention in your environment
-LLOG=`/usr/local/bin/cncli leaderlog --pool-id $POOLID --pool-vrf-skey $NODE_HOME/vrf.skey --byron-genesis $NODE_HOME/${ENVIRON}-byron-genesis.json --shelley-genesis $NODE_HOME/${ENVIRON}-shelley-genesis.json --pool-stake $POOL_STAKE --active-stake $ACTIVE_STAKE --ledger-set $PERIOD --tz $TZ`
+LLOG=`/usr/local/bin/cncli leaderlog --pool-id $POOLID --pool-vrf-skey $NODE_HOME/vrf.skey --byron-genesis $NODE_HOME/${ENVIRON}-byron-genesis.json --shelley-genesis $NODE_HOME/${ENVIRON}-shelley-genesis.json --consensus praos --pool-stake $POOL_STAKE --active-stake $ACTIVE_STAKE --ledger-set $PERIOD --tz $TZ`
 
 EPOCH=`jq .epoch <<< $LLOG`
 echo "\`Epoch $EPOCH\` 🧙🔮:"
