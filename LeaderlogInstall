@@ -6,11 +6,11 @@
 ########################################################################################
 
 # Update these variables with the correct values before running the script
-VERSION='2.1.1'
+VERSION='5.1.0'
 CNCLIDIR=/usr/local/bin
 
 # Copy new version to /tmp
-curl -sLJ https://github.com/AndrewWestberg/cncli/releases/download/v$VERSION/cncli-$VERSION-x86_64-unknown-linux-gnu.tar.gz -o /tmp/cncli-$VERSION-x86_64-unknown-linux-gnu.tar.gz
+curl -sLJ https://github.com/cardano-community/cncli/releases/download/v$VERSION/cncli-$VERSION-x86_64-unknown-linux-gnu.tar.gz -o /tmp/cncli-$VERSION-x86_64-unknown-linux-gnu.tar.gz
 
 # Backup old version of cncli to cncli.old
 sudo mv $CNCLIDIR/cncli $CNCLIDIR/cncli.old
