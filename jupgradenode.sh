@@ -41,6 +41,7 @@ cardano-node version
 cardano-cli version
 echo Cleaning up directories
 cd $HOME/git
+rm -rf cardano.old
 mv cardano-node cardano.old
 mv cardano-node2 cardano-node
 echo Update your config files if required then restart your node for a clean start
